@@ -18,10 +18,11 @@
 #define BTN_G_1 1
 #define BTN_G_2 1
 #define BTN_TEST 17
-#define JS_1 28
-#define JS_2 1
-#define JS_3 1
-#define JS_4 1
+#define JS_1 18
+#define JS_2 19
+#define JS_3 20
+#define JS_4 21
+#define ADC_GP 26
 
 void btn_init();
 

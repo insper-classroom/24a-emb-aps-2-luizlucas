@@ -13,8 +13,12 @@
 
 #include "hc06.h"
 #include "funcoes.h"
+#include "hardware/adc.h"
+
 
 QueueHandle_t xQueueBTN;
+QueueHandle_t xQueueADC;
+
 
 typedef struct {
     int status;
@@ -24,47 +28,52 @@ typedef struct {
 
 void btn_callback(uint gpio, uint32_t events) {
     btn_t str;
-    if (events == 0x4) str.status=0;
-    else if (events == 0x8) str.status=1; 
+    if (events == 0x4) str.status=1;
+    else if (events == 0x8) str.status=0; 
 
-    if (gpio=BTN_R_1) {
+    if (gpio==BTN_TEST) {
+        str.val[0]='b';
+        str.val[1]='t';
+    }
+
+    if (gpio==BTN_R_1) {
         str.val[0]='r';
         str.val[1]='1';
     }
-    if (gpio=BTN_R_2) {
+    if (gpio==BTN_R_2) {
         str.val[0]='r';
         str.val[1]='2';
     }
-    if (gpio=BTN_G_1) {
+    if (gpio==BTN_G_1) {
         str.val[0]='g';
         str.val[1]='1';
     }
-    if (gpio=BTN_G_2) {
+    if (gpio==BTN_G_2) {
         str.val[0]='g';
         str.val[1]='2';
     }
-    if (gpio=BTN_B_1) {
+    if (gpio==BTN_B_1) {
         str.val[0]='b';
         str.val[1]='1';
     }
-    if (gpio=BTN_B_2) {
+    if (gpio==BTN_B_2) {
         str.val[0]='b';
         str.val[1]='2';
     }
 
-    if (gpio=JS_1) {
+    if (gpio==JS_1) {
         str.val[0]='j';
         str.val[1]='r';
     }
-    if (gpio=JS_2) {
+    if (gpio==JS_2) {
         str.val[0]='j';
         str.val[1]='l';
     }
-    if (gpio=JS_3) {
+    if (gpio==JS_3) {
         str.val[0]='j';
         str.val[1]='u';
     }
-    if (gpio=JS_4) {
+    if (gpio==JS_4) {
         str.val[0]='j';
         str.val[1]='d';
     }
@@ -72,16 +81,19 @@ void btn_callback(uint gpio, uint32_t events) {
     xQueueSendFromISR(xQueueBTN, &str, 0);
 }   
 
+void adc_task(void *p) {
+    adc_init();
+    adc_gpio_init(ADC_GP);
 
-void hc06_task(void *p) {
-    uart_init(HC06_UART_ID, HC06_BAUD_RATE);
-    gpio_set_function(HC06_TX_PIN, GPIO_FUNC_UART);
-    gpio_set_function(HC06_RX_PIN, GPIO_FUNC_UART);
-    hc06_init("LUCAS_FEDE", "1234");
-
+    uint16_t adc_value;
+    printf("oi \n");
+    uint16_t vol=0;
     while (true) {
-        uart_puts(HC06_UART_ID, "OLAAA ");
-        vTaskDelay(pdMS_TO_TICKS(100));
+        adc_select_input(0);
+        uint16_t result = adc_read();
+        vol=result/40;
+        printf("VOLUME: %d\n",result);
+        
     }
 }
 
@@ -116,6 +128,7 @@ int main() {
 
     printf("Start bluetooth task\n");
     xQueueBTN = xQueueCreate(32, sizeof(btn_t));
+    xQueueADC = xQueueCreate(32, sizeof(uint16_t));
 
     gpio_set_irq_enabled_with_callback(BTN_R_1, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true, &btn_callback);
     gpio_set_irq_enabled(BTN_R_2, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
@@ -130,8 +143,8 @@ int main() {
     gpio_set_irq_enabled(BTN_TEST, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
 
 
-    //xTaskCreate(hc06_task, "UART_Task 1", 4096, NULL, 1, NULL);
-    xTaskCreate(btn_task, "btn", 4095, NULL, 1, NULL);
+    //xTaskCreate(btn_task, "btn", 4095, NULL, 1, NULL);
+    xTaskCreate(adc_task, "adc", 4095, NULL, 1, NULL);
 
 
     vTaskStartScheduler();
