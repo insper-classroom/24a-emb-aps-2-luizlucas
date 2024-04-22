@@ -1,19 +1,17 @@
 import serial
-import uinput
+import time
+import keyboard
 
 ser = serial.Serial('/dev/rfcomm0', 115200)
 
-# Create new mouse device
-buttons = [uinput.KEY_W]
-axes = [uinput.ABS_X, uinput.ABS_Y]
-device = uinput.Device(buttons + axes)
+wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
 
-
-
-def emulate_controller(button, value):
-        print(value )
-        device.emit(uinput.KEY_W, 1)
-
+def emulate():
+    print(1)
+    keyboard.press('w')
+    time.sleep(0.1)
+    keyboard.release('w')
+    #pyautogui.keyup('w')
 
 
 try:
@@ -23,14 +21,14 @@ try:
         while True:
             data = ser.read(1)
             if data == b'\xff':
-                break
+                break   
 
         # Read 4 bytes from UART
         #int.from_bytes(data, byteorder='big')
         data = ser.read(2)
         value = data[0]
         button=data[1]
-        emulate_controller(button, value)
+        emulate()
         #print (data)
         #print("")
         

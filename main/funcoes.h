@@ -22,7 +22,8 @@
 #define JS_2 19
 #define JS_3 20
 #define JS_4 21
-#define ADC_GP 26
+#define POT_1 26
+#define POT_2 27
 
 void btn_init();
 
