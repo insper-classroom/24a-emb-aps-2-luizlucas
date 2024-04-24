@@ -15,10 +15,11 @@ def set_volume(volume):
     mixer.setvolume(volume)
 
 
-#ser = serial.Serial('/dev/rfcomm0', 115200)
-ser = serial.Serial('/dev/ttyACM0', 115200)
+ser = serial.Serial('/dev/rfcomm0', 115200)
+#ser = serial.Serial('/dev/ttyACM0', 115200)
 mixer = alsaaudio.Mixer()
 mixer.setmute(0) 
+
 
 controle={"r1": '1',
           "r2": '2',
@@ -33,15 +34,14 @@ controle={"r1": '1',
           "bt": 'u',
         }
 
-try:
     # sync package
-    while True:
+while True:
+    try:
         print('Waiting for sync package...')
         while True:
             data = ser.read(1)
             if data == b'\xff':
                 break   
-        
         val = ser.read(1)[0]
         btn = ser.read(2).decode('utf-8')
         print (val, btn)
@@ -56,13 +56,16 @@ try:
                 set_volume(val)
             elif btn[1] == '2':
                 set_brightness(val)
+    except:
+        print('Paconte com erro')
 
+ser.close()
     
         
 
-except KeyboardInterrupt:
+""" except KeyboardInterrupt:
     print("Program terminated by user")
 except Exception as e:
     print(f"An error occurred: {e}")
 finally:
-    ser.close()
+    ser.close() """

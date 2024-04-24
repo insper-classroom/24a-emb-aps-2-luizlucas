@@ -34,7 +34,6 @@ void btn_init(){
     gpio_init(BTN_TEST);
     gpio_set_dir(BTN_TEST, GPIO_IN);
     gpio_pull_up(BTN_TEST);
-
-
-    
+    gpio_init(LED);
+    gpio_set_dir(LED, GPIO_OUT);
 }

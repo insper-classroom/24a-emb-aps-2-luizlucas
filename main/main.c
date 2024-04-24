@@ -84,25 +84,28 @@ void btn_callback(uint gpio, uint32_t events) {
     xQueueSendFromISR(xQueueBTN, &btn, 0);
 }   
 
-void bluetooth_task(void *p){
-    //printf("Start bluetooth task\n");
-    uart_init(HC06_UART_ID, HC06_BAUD_RATE);
-    gpio_set_function(HC06_TX_PIN, GPIO_FUNC_UART);
-    gpio_set_function(HC06_RX_PIN, GPIO_FUNC_UART);
-    hc06_init("LUCAS_FEDE", "1234");
-}
 
 void btn_task(void *p){
     btn_init();
     //printf("BTN_INIT");
 
+    //printf("Start bluetooth task\n");
+    uart_init(HC06_UART_ID, HC06_BAUD_RATE);
+    gpio_set_function(HC06_TX_PIN, GPIO_FUNC_UART);
+    gpio_set_function(HC06_RX_PIN, GPIO_FUNC_UART);
+    hc06_init("LUCAS_FEDE", "1234");
+
+    bool stats;
     btn_t btn;
     while (1){
+
         if (xQueueReceive(xQueueBTN, &btn,pdMS_TO_TICKS(100))) {
             //printf("btn: %d %s\n",btn.status, btn.ID);
             write_package(btn); 
             vTaskDelay(pdMS_TO_TICKS(1));
         }
+
+        stats = hc06_check_connection();
     }
 }
 
@@ -184,7 +187,6 @@ int main() {
     gpio_set_irq_enabled(BTN_TEST, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
 
 
-    //xTaskCreate(bluetooth_task, "Bluetooth Task", 4095, NULL, 1, NULL);
     xTaskCreate(btn_task, "Buttons Task", 4095, NULL, 1, NULL);
     xTaskCreate(pot1_task, "Pot 1 Task", 4095, NULL, 1, NULL);
     xTaskCreate(pot2_task, "Pot 2 Task", 4095, NULL, 1, NULL);

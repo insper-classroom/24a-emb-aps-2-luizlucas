@@ -24,6 +24,7 @@
 #define JR 12
 #define POT_1 26
 #define POT_2 27
+#define LED 8
 
 void btn_init();
 
