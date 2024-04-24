@@ -26,10 +26,10 @@ controle={"r1": '1',
           "g2": '4',
           "b1": '5',
           "b2": '6',
-          "ju": 's',
-          "jd": 'd',
-          "jr": 'w',
-          "jl": 'a',
+          "ju": 'w',
+          "jd": 's',
+          "jr": 'd',
+          "jl": 'a',    
           "bt": 'u',
         }
 
@@ -54,8 +54,8 @@ try:
             # VOLUME
             if btn[1] == '1':
                 set_volume(val)
-                #set_brightness(val)
-
+            elif btn[1] == '2':
+                set_brightness(val)
 
     
         

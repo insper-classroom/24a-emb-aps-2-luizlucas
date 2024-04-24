@@ -64,19 +64,19 @@ void btn_callback(uint gpio, uint32_t events) {
         btn.ID[1]='2';
     }
 
-    if (gpio==JS_1) {
+    if (gpio==JR) {
         btn.ID[0]='j';
         btn.ID[1]='r';
     }
-    if (gpio==JS_2) {
+    if (gpio==JL) {
         btn.ID[0]='j';
         btn.ID[1]='l';
     }
-    if (gpio==JS_3) {
+    if (gpio==JU) {
         btn.ID[0]='j';
         btn.ID[1]='u';
     }
-    if (gpio==JS_4) {
+    if (gpio==JD) {
         btn.ID[0]='j';
         btn.ID[1]='d';
     }
@@ -132,9 +132,40 @@ void pot1_task(void *p) {
             write_package(pot);
             //printf("VOL: %d\n", mean);
         }
-        vTaskDelay(pdMS_TO_TICKS(1));
-    }na
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
 }
+
+void pot2_task(void *p) {
+    btn_t pot;
+    pot.ID[0] = 'P';
+    pot.ID[1] = '2';
+
+    adc_init();
+    adc_gpio_init(POT_2);
+    //printf("ADC INICIADO \n");
+    int result, mean;
+    int last_mean = 0;
+    int values[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    int i = 0;
+    while (true) {
+        adc_select_input(1);
+        result = adc_read();
+        result = result/35;
+        values[(i++)%10] = result;
+        mean = (values[0] + values[1] + values[2] + values[3] + values[4] + values[5] + values[6] + values[7] + values[8] + values[9])/10;
+        if (mean > 95) mean = 100;
+        else if (mean < 5) mean = 0;
+        if ((mean > last_mean + 2) || (mean < last_mean - 2)) {
+            last_mean = mean;
+            pot.status = last_mean;
+            write_package(pot);
+            //printf("VOL: %d\n", mean);
+        }
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+}
+
 
 int main() {
     stdio_init_all();
@@ -146,16 +177,17 @@ int main() {
     gpio_set_irq_enabled(BTN_G_2, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
     gpio_set_irq_enabled(BTN_B_1, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
     gpio_set_irq_enabled(BTN_B_2, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
-    gpio_set_irq_enabled(JS_1, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
-    gpio_set_irq_enabled(JS_2, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
-    gpio_set_irq_enabled(JS_3, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
-    gpio_set_irq_enabled(JS_4, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
+    gpio_set_irq_enabled(JU, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
+    gpio_set_irq_enabled(JD, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
+    gpio_set_irq_enabled(JL, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
+    gpio_set_irq_enabled(JR, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
     gpio_set_irq_enabled(BTN_TEST, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
 
 
     //xTaskCreate(bluetooth_task, "Bluetooth Task", 4095, NULL, 1, NULL);
     xTaskCreate(btn_task, "Buttons Task", 4095, NULL, 1, NULL);
     xTaskCreate(pot1_task, "Pot 1 Task", 4095, NULL, 1, NULL);
+    xTaskCreate(pot2_task, "Pot 2 Task", 4095, NULL, 1, NULL);
 
     vTaskStartScheduler();
 
