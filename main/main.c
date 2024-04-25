@@ -129,16 +129,15 @@ void pot1_task(void *p) {
     adc_init();
     adc_gpio_init(POT_1);
     //printf("ADC INICIADO \n");
-    int result, mean;
     int last_mean = 0;
     int values[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     int i = 0;
     while (true) {
         adc_select_input(0);
-        result = adc_read();
+        int result = adc_read();
         result = result/35;
         values[(i++)%10] = result;
-        mean = (values[0] + values[1] + values[2] + values[3] + values[4] + values[5] + values[6] + values[7] + values[8] + values[9])/10;
+        int mean = (values[0] + values[1] + values[2] + values[3] + values[4] + values[5] + values[6] + values[7] + values[8] + values[9])/10;
         if (mean > 95) mean = 100;
         else if (mean < 5) mean = 0;
         if ((mean > last_mean + 2) || (mean < last_mean - 2)) {
@@ -159,16 +158,15 @@ void pot2_task(void *p) {
     adc_init();
     adc_gpio_init(POT_2);
     //printf("ADC INICIADO \n");
-    int result, mean;
     int last_mean = 0;
     int values[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     int i = 0;
     while (true) {
         adc_select_input(1);
-        result = adc_read();
+        int result = adc_read();
         result = result/35;
         values[(i++)%10] = result;
-        mean = (values[0] + values[1] + values[2] + values[3] + values[4] + values[5] + values[6] + values[7] + values[8] + values[9])/10;
+        int mean = (values[0] + values[1] + values[2] + values[3] + values[4] + values[5] + values[6] + values[7] + values[8] + values[9])/10;
         if (mean > 95) mean = 100;
         else if (mean < 5) mean = 0;
         if ((mean > last_mean + 2) || (mean < last_mean - 2)) {
