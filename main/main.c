@@ -16,6 +16,7 @@
 #include "hardware/adc.h"
 
 QueueHandle_t xQueueBTN;
+SemaphoreHandle_t xSemaphoreTrigger;
 
 typedef struct {
     char ID[2];
@@ -34,6 +35,8 @@ void btn_callback(uint gpio, uint32_t events) {
     if (events == 0x4)  btn.status=1;
     else if (events == 0x8) btn.status=0; 
 
+    if (gpio == HC06_PIN) xSemaphoreGiveFromISR(xSemaphoreTrigger,0);
+    else{
     if (gpio==BTN_TEST) {
         btn.ID[0]='b';
         btn.ID[1]='t';
@@ -81,7 +84,7 @@ void btn_callback(uint gpio, uint32_t events) {
         btn.ID[1]='d';
     }
     
-    xQueueSendFromISR(xQueueBTN, &btn, 0);
+    xQueueSendFromISR(xQueueBTN, &btn, 0);}
 }   
 
 
@@ -94,18 +97,27 @@ void btn_task(void *p){
     gpio_set_function(HC06_TX_PIN, GPIO_FUNC_UART);
     gpio_set_function(HC06_RX_PIN, GPIO_FUNC_UART);
     hc06_init("LUCAS_FEDE", "1234");
+    gpio_init(HC06_PIN);
+    gpio_set_dir(HC06_PIN, GPIO_IN);
+    gpio_put(LED,1);
 
-    bool stats;
+
+    int stats=0;
     btn_t btn;
     while (1){
-
         if (xQueueReceive(xQueueBTN, &btn,pdMS_TO_TICKS(100))) {
             //printf("btn: %d %s\n",btn.status, btn.ID);
             write_package(btn); 
             vTaskDelay(pdMS_TO_TICKS(1));
         }
-
-        stats = hc06_check_connection();
+        if ((xSemaphoreTake(xSemaphoreTrigger, pdMS_TO_TICKS(10))) ){
+            stats=1;
+        }
+        if (!stats){
+            gpio_put(LED,0);
+            vTaskDelay(pdMS_TO_TICKS(500));
+            gpio_put(LED,1);
+        }
     }
 }
 
@@ -173,6 +185,8 @@ void pot2_task(void *p) {
 int main() {
     stdio_init_all();
     xQueueBTN = xQueueCreate(32, sizeof(btn_t));
+    xSemaphoreTrigger = xSemaphoreCreateBinary();
+
 
     gpio_set_irq_enabled_with_callback(BTN_R_1, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true, &btn_callback);
     gpio_set_irq_enabled(BTN_R_2, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
@@ -185,6 +199,7 @@ int main() {
     gpio_set_irq_enabled(JL, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
     gpio_set_irq_enabled(JR, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
     gpio_set_irq_enabled(BTN_TEST, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
+    gpio_set_irq_enabled(HC06_PIN, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
 
 
     xTaskCreate(btn_task, "Buttons Task", 4095, NULL, 1, NULL);
