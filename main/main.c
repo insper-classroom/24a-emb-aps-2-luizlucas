@@ -16,7 +16,7 @@
 #include "hardware/adc.h"
 
 QueueHandle_t xQueueBTN;
-SemaphoreHandle_t xSemaphoreTrigger;
+QueueHandle_t xQueueINT;
 
 typedef struct {
     char ID[2];
@@ -35,7 +35,8 @@ void btn_callback(uint gpio, uint32_t events) {
     if (events == 0x4)  btn.status=1;
     else if (events == 0x8) btn.status=0; 
 
-    if (gpio == HC06_PIN) xSemaphoreGiveFromISR(xSemaphoreTrigger,0);
+    if (gpio == HC06_PIN) xQueueSendFromISR(xQueueINT, &btn.status, 0);
+
     else{
     if (gpio==BTN_TEST) {
         btn.ID[0]='b';
@@ -104,19 +105,22 @@ void btn_task(void *p){
 
     int stats=0;
     btn_t btn;
+    int status;
     while (1){
-        if (xQueueReceive(xQueueBTN, &btn,pdMS_TO_TICKS(100))) {
+        if (xQueueReceive(xQueueBTN, &btn,pdMS_TO_TICKS(1))) {
             //printf("btn: %d %s\n",btn.status, btn.ID);
             write_package(btn); 
             vTaskDelay(pdMS_TO_TICKS(1));
         }
-        if ((xSemaphoreTake(xSemaphoreTrigger, pdMS_TO_TICKS(10))) ){
-            stats=1;
+        if (xQueueReceive(xQueueINT, &status,pdMS_TO_TICKS(1)) ){
+            printf("STATUS: %d\n", status);
+            stats=status;
         }
-        if (!stats){
+        if (stats){
             gpio_put(LED,0);
-            vTaskDelay(pdMS_TO_TICKS(500));
+            vTaskDelay(pdMS_TO_TICKS(250));
             gpio_put(LED,1);
+            vTaskDelay(pdMS_TO_TICKS(250));
         }
     }
 }
@@ -183,7 +187,7 @@ void pot2_task(void *p) {
 int main() {
     stdio_init_all();
     xQueueBTN = xQueueCreate(32, sizeof(btn_t));
-    xSemaphoreTrigger = xSemaphoreCreateBinary();
+    xQueueINT = xQueueCreate(32, sizeof(int));
 
 
     gpio_set_irq_enabled_with_callback(BTN_R_1, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true, &btn_callback);
