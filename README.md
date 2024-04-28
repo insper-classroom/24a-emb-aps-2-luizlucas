@@ -36,3 +36,9 @@ Para utilizar o controle, é necessário compilar o código main.c para a Pico, 
 * 11x entradas digitais
 * Não possui latência
 * Hardware integrado ao controle
+
+### Possíveis melhorias
+
+A respeito da parte física, uma possível melhoria seria criar uma PCB para o projeto, evitando mal contato e desconexão dos fios, além de uma aparência mais organizada.
+
+A respeito do software, implementar uma task exclusiva do bluetooth seria mais adequado, para que ele ficasse independete das formas do programa. Assim, essa task seria responsável por iniciar o módulo, verificar conexão e enviar os dados.
